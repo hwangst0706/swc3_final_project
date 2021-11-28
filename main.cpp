@@ -5,10 +5,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <time.h>
-#include <ctime>
 #include <random>
-#include <algorithm>
-#include <vector>
 
 // 방향키
 #define UP					72
@@ -675,27 +672,11 @@ void Manual()
 	}
 }
 
-/*
-bool cmp(const int& a, const int& b) {
-	if (a > b) return true;
-	else return false;
-}
-*/
-
 void Score()
 {
 	string name[] = { "Player1", "Player2", "Player3" };
 	int ranking[3] = { 0, 1, 2 };
 	int x = 44, y = 10;
-
-	/*
-	vector<uint> vScore;
-	vScore.push_back(playerInfo[ranking[0]].get_score());
-	vScore.push_back(playerInfo[ranking[1]].get_score());
-	vScore.push_back(playerInfo[ranking[2]].get_score());
-
-	sort(vScore.begin(), vScore.end(), cmp);
-	*/
 
 	int score0 = playerInfo[0].get_score();
 	int score1 = playerInfo[1].get_score();
@@ -1537,7 +1518,7 @@ int main()
 				set_score_file();			// output 파일 업데이트
 				break;						// 첫 화면으로 이동
 			}
-			else if (select == 2) break;	// 첫 화면으로 이동'
+			else if (select == 2) break;	// 첫 화면으로 이동
 		}
 		case 1: {
 			Manual();
