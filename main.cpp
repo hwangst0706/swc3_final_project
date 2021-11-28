@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <time.h>
+#include <ctime>
 #include <random>
 #include <algorithm>
 #include <vector>
@@ -16,45 +17,55 @@
 #define RIGHT				77
 
 // Player
-#define MAX_HP				3
 #define START_POS_X			5
 #define START_POS_Y			22
+#define SIZE_X				8
+#define SIZE_Y				11
+#define MAX_HP				3
 
 // Bullet
 #define BULLET_START_X		START_POS_X + 18
-#define BULLET_START_Y		0
 
 // Huddle
-#define HUDDLE_TYPE			2
+#define HUDDLE_TYPE			3
 #define HUDDLE_START_X		104
-#define HUDDLE_START_Y		0
 #define ROCK_START_Y		29
+#define ROCK_SIZE_X			4
+#define ROCK_SIZE_Y			4
 #define TREE_START_Y		25
+#define TREE_SIZE_X			5
+#define TREE_SIZE_Y			8
 #define BIRD_TYPE			2
-#define BIRD_START_Y0		6
-#define BIRD_START_Y1		11
-#define BIRD_START_Y2		16
-#define CLOUD_START_Y		9
+#define BIRD_START_Y0		7
+#define BIRD_START_Y1		12
+#define BIRD_START_Y2		17
+#define BIRD_SIZE_X			8
+#define BIRD_SIZE_Y			4
 
 // Monster
 #define MONSTER_START_X		95
 #define MONSTER_START_Y		3
 #define MONSTER_BOUND_UP	3
 #define MONSTER_BOUND_DOWN	18
+#define MONSTER_SIZE		12
 
 // Item
 #define ITEM_TYPE			1
 #define ITEM_START_X		106
-#define ITEM_START_Y		13
-#define ITEM_UPDATE			15
 #define ITEM_BOUND_UP		8
 #define ITEM_BOUND_DOWN		25
+#define HEART_SIZE_X		7
+#define HEART_SIZE_Y		5
+#define STAR_SIZE			5		
 
 // Game Setting
 #define SPEED_UPDATE		35
+#define ITEM_UPDATE			15
 #define MONSTER_UPDATE		30
-#define STAR_MAINTAIN		10
+#define STAR_MAINTAIN		7
 #define BULLET_SPEED		2
+#define WAIT				350
+#define GHOST_SCORE			10
 
 using namespace std;
 typedef unsigned int uint;
@@ -99,10 +110,8 @@ public:
 	void set_hp(uint val) { hp = val; }
 	void set_Xpos(int val) { pos.x = val; }
 	void set_Ypos(int val) { pos.y = val; }
-	friend void Character();
-	friend class Bullet;
+	friend void Character(Player &myplay, bool status);
 	void reset() {
-		// score = 0;
 		hp = MAX_HP;
 		pos.x = START_POS_X;
 		pos.y = START_POS_Y;
@@ -113,34 +122,24 @@ class Bullet {
 private:
 	P pos;
 public:
-	Bullet() { pos.x = BULLET_START_X; pos.y = BULLET_START_Y; }
+	Bullet() { pos.x = BULLET_START_X; pos.y = 0; }
 	int get_Xpos() { return pos.x; }
 	int get_Ypos() { return pos.y; }
 	void set_Xpos(int val) { pos.x = val; }
 	void set_Ypos(int val) { pos.y = val; }
-	void reset() {
-		pos.x = BULLET_START_X;
-		pos.y = BULLET_START_Y;
-	}
+	void reset() { pos.x = BULLET_START_X; pos.y = 0; }
 };
 
 class Huddle {
 private:
-	uint type;	// 0 : rock, 1 : tree, 2 : bird
 	P pos;
 public:
-	Huddle() : type(0) { pos.x = HUDDLE_START_X; pos.y = HUDDLE_START_Y; }
-	Huddle(uint t) : type(t) { pos.x = HUDDLE_START_X; pos.y = HUDDLE_START_Y; }
-	uint get_type() { return type; }
+	Huddle() { pos.x = HUDDLE_START_X; pos.y = 0; }
 	int get_Xpos() { return pos.x; }
 	int get_Ypos() { return pos.y; }
-	void set_type(uint t) { type = t; }
 	void set_Xpos(int val) { pos.x = val; }
 	void set_Ypos(int val) { pos.y = val; }
-	void reset() {
-		pos.x = HUDDLE_START_X;
-		pos.y = HUDDLE_START_Y;
-	}
+	void reset() { pos.x = HUDDLE_START_X; pos.y = 0; }
 };
 
 class Monster {
@@ -164,57 +163,23 @@ public:
 
 class Item {
 private:
-	uint type;	// heart, star, blank
 	P pos;
 public:
-	Item() : type(0) { pos.x = ITEM_START_X; pos.y = ITEM_START_Y; }
-	// Item(uint t) : type(t) { pos.x = ITEM_START_X; pos.y = ITEM_START_Y; }
-	uint get_type() { return type; }
-	int get_Xpos() { return pos.x; }
-	int get_Ypos() { return pos.y; }
-	void set_type(uint t) { type = t; }
-	void set_Xpos(int val) { pos.x = val; }
-	void set_Ypos(int val) { pos.y = val; }
-	void reset() {
-		pos.x = ITEM_START_X;
-		pos.y = ITEM_START_Y;
-	}
-};
-
-/*
-class Sky {
-private:
-	uint type;	// cloud, bird
-	P pos;
-public:
-	Sky() : type(0) { pos.x = SKY_START_X; pos.y = 0; }
+	Item() { pos.x = ITEM_START_X; pos.y = ITEM_BOUND_UP; }
 	int get_Xpos() { return pos.x; }
 	int get_Ypos() { return pos.y; }
 	void set_Xpos(int val) { pos.x = val; }
 	void set_Ypos(int val) { pos.y = val; }
-	void reset() {
-		// type = t;
-		pos.x = SKY_START_X;
-		pos.y = 0;
-	}
+	void reset() { pos.x = ITEM_START_X; pos.y = ITEM_BOUND_UP; }
 };
-*/
-
-/*
-class map {
-private:
-	uint time;
-};
-*/
 
 /*---------전역 변수 초기화---------*/
 int playerNum;
 Player playerInfo[3];
 Bullet bulletInfo;
-Huddle huddleInfo[3];
+Huddle huddleInfo[3];	// 0 : rock, 1 : tree, 2 : bird
 Monster monsterInfo;
-Item itemInfo[3];
-// Sky skyInfo;
+Item itemInfo[3];		// 0 :heart, 1 :star, 2 : blank / disappear
 
 /*----------함수 영역 시작----------*/
 void init_class()
@@ -226,10 +191,9 @@ void init_class()
 	}
 	bulletInfo.reset();
 	monsterInfo.reset();
-	// skyInfo.reset();
 }
 
-void get_scores_file()
+void get_score_file()
 {
 	uint num[3] = { 0 };
 
@@ -240,11 +204,11 @@ void get_scores_file()
 	for (int i = 0; i < 3; i++)
 		playerInfo[i].set_score(num[i]);
 	in.close();
-	
+
 	return;
 }
 
-void set_scores_file()
+void set_score_file()
 {
 	ofstream out("score.txt");
 
@@ -275,10 +239,9 @@ void cursor_pos(int x, int y)
 
 int input_key_dir()
 {
-	char c;
 	if (_kbhit())
 	{
-		c = _getch();
+		char c = _getch();
 		if (c == -32) return _getch();
 	}
 	return 0;
@@ -286,21 +249,23 @@ int input_key_dir()
 
 int MainMenu()
 {
-	int x = 44, y = 10;
+	int x = 44, y = 9;
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
 
 	system("cls");
 	cursor_pos(x, y);
 	printf("=================================");
 	cursor_pos(x + 4, y + 3);
-	printf("▶  G A M E S T A R T");
+	printf("▶  G A M E  S T A R T");
 	cursor_pos(x + 8, y + 6);
-	printf("S C O R E");
+	printf("H O W  T O  P L A Y");
 	cursor_pos(x + 8, y + 9);
+	printf("S C O R E");
+	cursor_pos(x + 8, y + 12);
 	printf("E X I T");
-	cursor_pos(x, y + 12);
+	cursor_pos(x, y + 15);
 	printf("=================================");
-	printf("\n\n\n\n\n\n\n\n\n\n\n");
+	printf("\n\n\n\n\n\n\n\n\n");
 
 	int menu = 0;
 	bool isSelect = FALSE;
@@ -309,23 +274,25 @@ int MainMenu()
 		int key = input_key_dir();
 
 		if (key == DOWN) menu++;
-		else if (key == UP) menu += 2;
+		else if (key == UP) menu += 3;
 		else if (key == RIGHT) isSelect = TRUE;
 		else if (key == 0) continue;
 
-		menu %= 3;
+		menu %= 4;
 
 		if (menu == 0) {
 			system("cls");
 			cursor_pos(x, y);
 			printf("=================================");
 			cursor_pos(x + 4, y + 3);
-			printf("▶  G A M E S T A R T");
+			printf("▶  G A M E  S T A R T");
 			cursor_pos(x + 8, y + 6);
-			printf("S C O R E");
+			printf("H O W  T O  P L A Y");
 			cursor_pos(x + 8, y + 9);
+			printf("S C O R E");
+			cursor_pos(x + 8, y + 12);
 			printf("E X I T");
-			cursor_pos(x, y + 12);
+			cursor_pos(x, y + 15);
 			printf("=================================");
 		}
 		else if (menu == 1) {
@@ -333,12 +300,14 @@ int MainMenu()
 			cursor_pos(x, y);
 			printf("=================================");
 			cursor_pos(x + 8, y + 3);
-			printf("G A M E S T A R T");
+			printf("G A M E  S T A R T");
 			cursor_pos(x + 4, y + 6);
-			printf("▶  S C O R E");
+			printf("▶  H O W  T O  P L A Y");
 			cursor_pos(x + 8, y + 9);
+			printf("S C O R E");
+			cursor_pos(x + 8, y + 12);
 			printf("E X I T");
-			cursor_pos(x, y + 12);
+			cursor_pos(x, y + 15);
 			printf("=================================");
 		}
 		else if (menu == 2) {
@@ -346,15 +315,32 @@ int MainMenu()
 			cursor_pos(x, y);
 			printf("=================================");
 			cursor_pos(x + 8, y + 3);
-			printf("G A M E S T A R T");
+			printf("G A M E  S T A R T");
 			cursor_pos(x + 8, y + 6);
-			printf("S C O R E");
+			printf("H O W  T O  P L A Y");
 			cursor_pos(x + 4, y + 9);
-			printf("▶  E X I T");
-			cursor_pos(x, y + 12);
+			printf("▶  S C O R E");
+			cursor_pos(x + 8, y + 12);
+			printf("E X I T");
+			cursor_pos(x, y + 15);
 			printf("=================================");
 		}
-		printf("\n\n\n\n\n\n\n\n\n\n\n");
+		else if (menu == 3) {
+			system("cls");
+			cursor_pos(x, y);
+			printf("=================================");
+			cursor_pos(x + 8, y + 3);
+			printf("G A M E  S T A R T");
+			cursor_pos(x + 8, y + 6);
+			printf("H O W  T O  P L A Y");
+			cursor_pos(x + 8, y + 9);
+			printf("S C O R E");
+			cursor_pos(x + 4, y + 12);
+			printf("▶  E X I T");
+			cursor_pos(x, y + 15);
+			printf("=================================");
+		}
+		printf("\n\n\n\n\n\n\n\n\n");
 
 		if (isSelect) {
 			if (menu == 0) {
@@ -362,12 +348,14 @@ int MainMenu()
 				cursor_pos(x, y);
 				printf("=================================");
 				cursor_pos(x + 4, y + 3);
-				printf("▷  G A M E S T A R T");
+				printf("▷  G A M E  S T A R T");
 				cursor_pos(x + 8, y + 6);
-				printf("S C O R E");
+				printf("H O W  T O  P L A Y");
 				cursor_pos(x + 8, y + 9);
+				printf("S C O R E");
+				cursor_pos(x + 8, y + 12);
 				printf("E X I T");
-				cursor_pos(x, y + 12);
+				cursor_pos(x, y + 15);
 				printf("=================================");
 			}
 			else if (menu == 1) {
@@ -375,12 +363,14 @@ int MainMenu()
 				cursor_pos(x, y);
 				printf("=================================");
 				cursor_pos(x + 8, y + 3);
-				printf("G A M E S T A R T");
+				printf("G A M E  S T A R T");
 				cursor_pos(x + 4, y + 6);
-				printf("▷  S C O R E");
+				printf("▷  H O W  T O  P L A Y");
 				cursor_pos(x + 8, y + 9);
+				printf("S C O R E");
+				cursor_pos(x + 8, y + 12);
 				printf("E X I T");
-				cursor_pos(x, y + 12);
+				cursor_pos(x, y + 15);
 				printf("=================================");
 			}
 			else if (menu == 2) {
@@ -388,16 +378,33 @@ int MainMenu()
 				cursor_pos(x, y);
 				printf("=================================");
 				cursor_pos(x + 8, y + 3);
-				printf("G A M E S T A R T");
+				printf("G A M E  S T A R T");
 				cursor_pos(x + 8, y + 6);
-				printf("S C O R E");
+				printf("H O W  T O  P L A Y");
 				cursor_pos(x + 4, y + 9);
-				printf("▷  E X I T");
-				cursor_pos(x, y + 12);
+				printf("▷  S C O R E");
+				cursor_pos(x + 8, y + 12);
+				printf("E X I T");
+				cursor_pos(x, y + 15);
 				printf("=================================");
 			}
-			printf("\n\n\n\n\n\n\n\n\n\n\n");
-			Sleep(400);
+			else if (menu == 3) {
+				system("cls");
+				cursor_pos(x, y);
+				printf("=================================");
+				cursor_pos(x + 8, y + 3);
+				printf("G A M E  S T A R T");
+				cursor_pos(x + 8, y + 6);
+				printf("H O W  T O  P L A Y");
+				cursor_pos(x + 8, y + 9);
+				printf("S C O R E");
+				cursor_pos(x + 4, y + 12);
+				printf("▷  E X I T");
+				cursor_pos(x, y + 15);
+				printf("=================================");
+			}
+			printf("\n\n\n\n\n\n\n\n\n");
+			Sleep(WAIT);
 
 			break;
 		}
@@ -406,9 +413,9 @@ int MainMenu()
 	return menu;
 }
 
-int GameStart()
+int SelectPlayer()
 {
-	int x = 44, y = 10;
+	int x = 44, y = 11;
 
 	system("cls");
 	cursor_pos(x, y);
@@ -421,17 +428,17 @@ int GameStart()
 	printf("P L A Y E R  3");
 	cursor_pos(x, y + 12);
 	printf("=================================");
-	printf("\n\n\n\n\n\n\n\n\n\n\n");
+	printf("\n\n\n\n\n\n\n\n\n\n");
 
-	int select = 4;
+	int select = 0;
 
 	while (1) {
 		int key = input_key_dir();
 
 		if (key == DOWN) playerNum++;
 		else if (key == UP) playerNum += 2;
-		else if (key == RIGHT) select = playerNum;
-		else if (key == LEFT) select = 3;
+		else if (key == RIGHT) select = 1;
+		else if (key == LEFT) select = 2;
 		else if (key == 0) continue;
 
 		playerNum %= 3;
@@ -475,9 +482,9 @@ int GameStart()
 			cursor_pos(x, y + 12);
 			printf("=================================");
 		}
-		printf("\n\n\n\n\n\n\n\n\n\n\n");
+		printf("\n\n\n\n\n\n\n\n\n\n");
 
-		if (select < 3) {
+		if (select == 1) {
 			if (playerNum == 0) {
 				system("cls");
 				cursor_pos(x, y);
@@ -517,12 +524,11 @@ int GameStart()
 				cursor_pos(x, y + 12);
 				printf("=================================");
 			}
-			printf("\n\n\n\n\n\n\n\n\n\n\n");
-			Sleep(400);
-
+			printf("\n\n\n\n\n\n\n\n\n\n");
+			Sleep(WAIT);
 			break;
 		}
-		else if (select == 3) break;
+		else if (select == 2) break;
 	}
 
 	return select;
@@ -555,11 +561,10 @@ void Count3sec()
 	printf("          ■");
 	cursor_pos(x, y++);
 	printf("■■■■■■");
-	printf("\n\n\n\n\n\n\n\n\n\n\n");
+	printf("\n\n\n\n\n\n\n\n\n\n\n\n");
 	Sleep(1000);
-	
-	y = 11;
 
+	y = 11;
 	system("cls");
 	cursor_pos(x, y++);
 	printf("■■■■■■");
@@ -583,11 +588,10 @@ void Count3sec()
 	printf("■");
 	cursor_pos(x, y++);
 	printf("■■■■■■");
-	printf("\n\n\n\n\n\n\n\n\n\n\n");
+	printf("\n\n\n\n\n\n\n\n\n\n\n\n");
 	Sleep(1000);
 
 	x = 55, y = 11;
-
 	system("cls");
 	cursor_pos(x, y++);
 	printf("  ■■");
@@ -611,19 +615,77 @@ void Count3sec()
 	printf("    ■");
 	cursor_pos(x, y++);
 	printf("■■■■■");
-	printf("\n\n\n\n\n\n\n\n\n\n\n");
+	printf("\n\n\n\n\n\n\n\n\n\n\n\n");
 	Sleep(1000);
 }
 
+void Manual()
+{
+	int x = 36, y = 7;
+
+	system("cls");
+	cursor_pos(x - 1, y++);
+	printf("=============== H O W  T O  P L A Y ===============");
+	y++;
+	cursor_pos(x + 12, y++);
+	printf("↑ : JUMP    → : ATTACK"); // ← ↓
+	y++; y++;
+	cursor_pos(x, y++);
+	printf("Avoid various obstacles that are approaching!");
+	cursor_pos(x, y++);
+	printf("When you bump into obstacles, HP is reduced.");
+	cursor_pos(x, y++);
+	printf("If HP reaches 0, the game is over.");
+	y++;
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
+	cursor_pos(x, y++);
+	printf("Get rid of the ghost using the attack!");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+	cursor_pos(x, y++);
+	printf("If you bump into a ghost, the game ends right away.");
+	cursor_pos(x, y++);
+	printf("But if you catch a ghost, you'll get a bonus point.");
+	y++;
+	cursor_pos(x, y++);
+	printf("There are items that help you.");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), RED);
+	cursor_pos(x, y++);
+	printf("Heart♥ increases your HP. (Maximum HP is 3)");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	cursor_pos(x, y++);
+	printf("Star★ make you invincible.");
+	y++;
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+	cursor_pos(x, y++);
+	printf("Survive as long as possible.");
+	cursor_pos(x, y++);
+	printf("GOOD LUCK!");
+	cursor_pos(x, y + 2);
+	printf("===================================================");
+
+	bool isSelect = FALSE;
+
+	while (1) {
+		int key = input_key_dir();
+
+		if (key == LEFT) isSelect = TRUE;
+		else if (key == 0) continue;
+
+		if (isSelect) break;
+	}
+}
+
+/*
 bool cmp(const int& a, const int& b) {
 	if (a > b) return true;
 	else return false;
 }
+*/
 
-int Score()
+void Score()
 {
 	string name[] = { "Player1", "Player2", "Player3" };
-	int ranking[3] = { 0 };
+	int ranking[3] = { 0, 1, 2 };
 	int x = 44, y = 10;
 
 	/*
@@ -639,11 +701,11 @@ int Score()
 	int score1 = playerInfo[1].get_score();
 	int score2 = playerInfo[2].get_score();
 
-	if (score0 > score1) {
-		if (score1 > score2) {
+	if (score0 >= score1) {
+		if (score1 >= score2) {
 			ranking[0] = 0; ranking[1] = 1; ranking[2] = 2;
 		}
-		else if (score0 > score2) {
+		else if (score0 >= score2) {
 			ranking[0] = 0; ranking[1] = 2; ranking[2] = 1;
 		}
 		else {
@@ -651,10 +713,10 @@ int Score()
 		}
 	}
 	else {
-		if (score0 > score2) {
+		if (score0 >= score2) {
 			ranking[0] = 1; ranking[1] = 0; ranking[2] = 2;
 		}
-		else if (score1 > score2) {
+		else if (score1 >= score2) {
 			ranking[0] = 1; ranking[1] = 2; ranking[2] = 0;
 		}
 		else {
@@ -675,133 +737,124 @@ int Score()
 	printf("=================================");
 	printf("\n\n\n\n\n\n\n\n\n\n\n");
 
-	int next = 4;
-	int player = 0;
 	bool isSelect = FALSE;
 
 	while (1) {
 		int key = input_key_dir();
 
-		if (key == DOWN) player++;
-		else if (key == UP) player += 2;
-		else if (key == RIGHT) next = player;
-		else if (key == LEFT) next = 3;
+		if (key == LEFT) isSelect = TRUE;
 		else if (key == 0) continue;
 
-		player %= 3;
-
-		if (next < 4) break;
+		if (isSelect) break;
 	}
-
-	return next;
 }
 
-void Character(Player myplay, int isStar)
+void Character(Player &myplay, bool status)
 {
-	int x = myplay.get_Xpos(), y = myplay.get_Ypos();
+	int x = myplay.pos.x, y = myplay.pos.y;
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	cursor_pos(x + 6, y++);
 	printf("■■■");
 	cursor_pos(x + 4, y++);
 	printf("■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■");
 	cursor_pos(x + 2, y++);
 	printf("■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■■■■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■");
 	cursor_pos(x + 2, y++);
 	printf("■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■■■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■■");
 	cursor_pos(x, y++);
 	printf("■■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_SKYBLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SKYBLUE);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_SKYBLUE);
 	printf("■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■");
 	cursor_pos(x, y++);
 	printf("■■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■■■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■■");
 	cursor_pos(x, y++);
 	printf("■■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■■■■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■");
 	cursor_pos(x, y++);
 	printf("■■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■■■■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■");
 	cursor_pos(x + 2, y++);
 	printf("■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■");
 	cursor_pos(x + 2, y++);
 	printf("■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■  ■");
-	if (!isStar)
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	else
+	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
 	printf("■");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	printf("■");
@@ -862,9 +915,25 @@ void Bird(int posX, int posY)
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
 	cursor_pos(x + 2, y++);
-	printf("■        ■");
+	printf("■");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), BLACK);
+	printf("■■■■");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
+	printf("■");
 	cursor_pos(x, y++);
-	printf("■  ■    ■  ■");
+	printf("■");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), BLACK);
+	printf("■");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
+	printf("■");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), BLACK);
+	printf("■■");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
+	printf("■");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), BLACK);
+	printf("■");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
+	printf("■");
 	cursor_pos(x + 6, y++);
 	printf("■■");
 	cursor_pos(x + 6, y++);
@@ -981,26 +1050,7 @@ void Star(int posX, int posY)
 	printf("■    ■");
 }
 
-/*
-void Cloud(int posX, int posY)
-{
-	int x = posX, y = posY;
-
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SKYBLUE);
-	cursor_pos(x + 2, y++);
-	printf("■■  ■■");
-	cursor_pos(x, y++);
-	printf("■■■■■■■");
-	cursor_pos(x, y++);
-	printf("■■■■■■■■");
-	cursor_pos(x, y++);
-	printf("■■■■■■■");
-	cursor_pos(x + 2, y++);
-	printf("■■■■");
-}
-*/
-
-void GameOver()
+void GameOver(uint score)
 {
 	int x = 37, y = 10;
 
@@ -1033,59 +1083,62 @@ void GameOver()
 	cursor_pos(x, y++);
 	printf("■■■■        ■        ■■■■    ■    ■");
 
-	cursor_pos(x + 5, y + 5);
+	cursor_pos(x + 15, y + 3);
+	printf("S C O R E  %u", score);
+
+	cursor_pos(x + 5, y + 9);
 	system("pause");
 }
 
-void ScoreHP(uint score)
+void timeHP(uint flowtime)
 {
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-
 	cursor_pos(2, 1);
-	printf("SCORE  %u", score);
+	printf("TIME  %u min %u sec", flowtime / 60, flowtime % 60);
+	// printf("TIME  %u sec", flowtime);
 
 	cursor_pos(102, 1);
 	printf("HEART  ");
 	for (uint i = 0; i < playerInfo[playerNum].get_hp(); i++) printf("♥ ");
 }
 
-int check_attack()
+bool check_attack()
 {
 	int bx = bulletInfo.get_Xpos(), by = bulletInfo.get_Ypos();
 	int mx = monsterInfo.get_Xpos(), my = monsterInfo.get_Ypos();
 
 	for (int i = bx; i < bx + 2; i++) {
-		for (int nx = mx; nx < mx + 12; nx++) {
-			for (int ny = my; ny < my + 12; ny++) {
-				if (i == nx && by == ny) return 1;
+		for (int nx = mx; nx < mx + MONSTER_SIZE; nx++) {
+			for (int ny = my; ny < my + MONSTER_SIZE; ny++) {
+				if (i == nx && by == ny) return TRUE;
 			}
 		}
 	}
-	return 0;
+	return FALSE;
 }
 
-int check_hunt(bool status)
+bool check_hunt(bool status)
 {
-	if (status) return 0;
+	if (status) return FALSE;
 
 	int px = playerInfo[playerNum].get_Xpos(), py = playerInfo[playerNum].get_Ypos();
 	int mx = monsterInfo.get_Xpos(), my = monsterInfo.get_Ypos();
-	
-	for (int i = px; i < px + 8; i++) {
-		for (int j = py; j < py + 11; j++) {
-			for (int nx = mx; nx < mx + 12; nx++) {
-				for (int ny = my; ny < my + 12; ny++) {
-					if (i == nx && j == ny) return 1;
+
+	for (int i = px; i < px + SIZE_X; i++) {
+		for (int j = py; j < py + SIZE_Y; j++) {
+			for (int nx = mx; nx < mx + MONSTER_SIZE; nx++) {
+				for (int ny = my; ny < my + MONSTER_SIZE; ny++) {
+					if (i == nx && j == ny) return TRUE;
 				}
 			}
 		}
 	}
-	return 0;
+	return FALSE;
 }
 
-int check_fail(uint huddle, bool status)
+bool check_fail(uint huddle, bool status)
 {
-	if (status) return 0;
+	if (status) return FALSE;
 
 	int px = playerInfo[playerNum].get_Xpos(), py = playerInfo[playerNum].get_Ypos();
 	int hx = huddleInfo[huddle].get_Xpos(), hy;
@@ -1093,11 +1146,11 @@ int check_fail(uint huddle, bool status)
 	if (huddle == 0) {
 		// rock
 		hy = ROCK_START_Y;
-		for (int i = px; i < px + 8; i++) {
-			for (int j = py; j < py + 11; j++) {
-				for (int nx = hx; nx < hx + 4; nx++) {
-					for (int ny = hy; ny < hy + 4; ny++) {
-						if (i == nx && j == ny) return 1;
+		for (int i = px; i < px + SIZE_X; i++) {
+			for (int j = py; j < py + SIZE_Y; j++) {
+				for (int nx = hx; nx < hx + ROCK_SIZE_X; nx++) {
+					for (int ny = hy; ny < hy + ROCK_SIZE_Y; ny++) {
+						if (i == nx && j == ny) return TRUE;
 					}
 				}
 			}
@@ -1106,11 +1159,11 @@ int check_fail(uint huddle, bool status)
 	else if (huddle == 1) {
 		// tree
 		hy = TREE_START_Y;
-		for (int i = px; i < px + 8; i++) {
-			for (int j = py; j < py + 11; j++) {
-				for (int nx = hx; nx < hx + 5; nx++) {
-					for (int ny = hy; ny < hy + 8; ny++) {
-						if (i == nx && j == ny) return 1;
+		for (int i = px; i < px + SIZE_X; i++) {
+			for (int j = py; j < py + SIZE_Y; j++) {
+				for (int nx = hx; nx < hx + TREE_SIZE_X; nx++) {
+					for (int ny = hy; ny < hy + TREE_SIZE_Y; ny++) {
+						if (i == nx && j == ny) return TRUE;
 					}
 				}
 			}
@@ -1120,31 +1173,53 @@ int check_fail(uint huddle, bool status)
 	else if (huddle == 2) {
 		// bird
 		hy = huddleInfo[huddle].get_Ypos();
-		for (int i = px; i < px + 8; i++) {
-			for (int j = py; j < py + 11; j++) {
-				for (int nx = hx; nx < hx + 12; nx++) {
-					for (int ny = hy; ny < hy + 4; ny++) {
-						if (i == nx && j == ny) return 1;
+		for (int i = px; i < px + SIZE_X; i++) {
+			for (int j = py; j < py + SIZE_Y; j++) {
+				for (int nx = hx; nx < hx + BIRD_SIZE_X; nx++) {
+					for (int ny = hy; ny < hy + BIRD_SIZE_Y; ny++) {
+						if (i == nx && j == ny) return TRUE;
 					}
 				}
 			}
 		}
 	}
-	return 0;
+	else {
+		// rock & bird
+		hx = huddleInfo[0].get_Xpos();
+		hy = ROCK_START_Y;
+		int bx = huddleInfo[2].get_Xpos(), by = huddleInfo[2].get_Ypos();
+		for (int i = px; i < px + SIZE_X; i++) {
+			for (int j = py; j < py + SIZE_Y; j++) {
+				// rock
+				for (int nx = hx; nx < hx + ROCK_SIZE_X; nx++) {
+					for (int ny = hy; ny < hy + ROCK_SIZE_Y; ny++) {
+						if (i == nx && j == ny) return TRUE;
+					}
+				}
+				// bird
+				for (int nx = bx; nx < bx + BIRD_SIZE_X; nx++) {
+					for (int ny = by; ny < by + BIRD_SIZE_Y; ny++) {
+						if (i == nx && j == ny) return TRUE;
+					}
+				}
+			}
+		}
+	}
+	return FALSE;
 }
 
-int check_success(uint player, uint item)
+bool check_success(uint player, uint item)
 {
 	int px = playerInfo[playerNum].get_Xpos(), py = playerInfo[playerNum].get_Ypos();
 	int ix = itemInfo[item].get_Xpos(), iy = itemInfo[item].get_Ypos();
 
 	if (item == 0) {
 		// heart
-		for (int i = px; i < px + 8; i++) {
-			for (int j = py; j < py + 11; j++) {
-				for (int nx = ix; nx < ix + 7; nx++) {
-					for (int ny = iy; ny < iy + 5; ny++) {
-						if (i == nx && j == ny) return 1;
+		for (int i = px; i < px + SIZE_X; i++) {
+			for (int j = py; j < py + SIZE_Y; j++) {
+				for (int nx = ix; nx < ix + HEART_SIZE_X; nx++) {
+					for (int ny = iy; ny < iy + HEART_SIZE_Y; ny++) {
+						if (i == nx && j == ny) return TRUE;
 					}
 				}
 			}
@@ -1152,20 +1227,20 @@ int check_success(uint player, uint item)
 	}
 	else if (item == 1) {
 		// star
-		for (int i = px; i < px + 8; i++) {
-			for (int j = py; j < py + 11; j++) {
-				for (int nx = ix; nx < ix + 5; nx++) {
-					for (int ny = iy; ny < iy + 5; ny++) {
-						if (i == nx && j == ny) return 1;
+		for (int i = px; i < px + SIZE_X; i++) {
+			for (int j = py; j < py + SIZE_Y; j++) {
+				for (int nx = ix; nx < ix + STAR_SIZE; nx++) {
+					for (int ny = iy; ny < iy + STAR_SIZE; ny++) {
+						if (i == nx && j == ny) return TRUE;
 					}
 				}
 			}
 		}
 	}
-	return 0;
+	return FALSE;
 }
 
-void Playing()
+uint Playing()
 {
 	// 시간 관련 변수
 	time_t start = time(NULL);
@@ -1177,8 +1252,8 @@ void Playing()
 	time(&finish);
 	time(&start_star);
 
-	// 키보드 입력 관련 변수
-	bool enter = FALSE;
+	// 점수 관련 변수
+	int num_ghost = 0;
 
 	// 점프 관련 변수
 	bool isDown = FALSE;
@@ -1198,31 +1273,17 @@ void Playing()
 	bool isStar = FALSE, item_check = TRUE;
 	int item_speed = 2, item_type = 0, item_once = 0;
 
-	/*
-	// 하늘 관련 변수
-	bool sky_check = TRUE;
-	int sky_speed = 2, sky_type = 0;
-	*/
+	// 쓰레기 input 제거
+	while (input_key_dir());
 
 	while (1) {
-
-		// 게임 일시정지
 		int key_dir = input_key_dir();
-
-		if (!enter && (key_dir == LEFT)) {
-			enter = TRUE;
-			cursor_pos(42, 27);
-			system("pause");
-		}
-		if (enter && (key_dir != 0)) {
-			enter = FALSE;
-			Sleep(400);
-		}
 
 		/*---------플레이어---------*/
 		// 플레이어 2단 점프
 		if (key_dir == UP) {
-			if (jump_type == 0) jump_type = 1;
+			if (jump_type == 0)
+				jump_type = 1;
 			else if (jump_type == 1) {
 				isDown = FALSE;
 				jump_type = 2;
@@ -1235,7 +1296,7 @@ void Playing()
 			jump_cnt++;
 
 			if (isDown) playerInfo[playerNum].set_Ypos(playerInfo[playerNum].get_Ypos() + 1);
-			else playerInfo[playerNum].set_Ypos(playerInfo[playerNum].get_Ypos() - 1);
+			else		playerInfo[playerNum].set_Ypos(playerInfo[playerNum].get_Ypos() - 1);
 
 			if (jump_cnt == jump_size) {
 				if (!isDown) {
@@ -1272,41 +1333,55 @@ void Playing()
 				if (check_attack()) {
 					bullet_check = FALSE;
 					monsterInfo.set_dead(TRUE);
+					num_ghost++;
 				}
 			}
 		}
-		if (bulletInfo.get_Xpos() > 116) {
-			bullet_check = FALSE;
-		}
+		if (bulletInfo.get_Xpos() > 116) bullet_check = FALSE;
 		/*--------------------------*/
 
 		/*----------장애물----------*/
 		// 장애물 속도 증가
 		middle = time(NULL);
 		time(&middle);
-		if ((int)difftime(middle, start) > ((huddle_speed - 1) * SPEED_UPDATE)) huddle_speed++;
+		if ((int)difftime(middle, start) > (huddle_speed * SPEED_UPDATE)) huddle_speed++;
 
 		// 장애물 위치 선정
-		uint huddle_curx = huddleInfo[huddle_type].get_Xpos();
-		huddleInfo[huddle_type].set_Xpos(huddle_curx - huddle_speed);
+		if (huddle_type == 3) {
+			uint huddle_curx = huddleInfo[0].get_Xpos();
+			huddleInfo[0].set_Xpos(huddle_curx - huddle_speed);
+			huddleInfo[2].set_Xpos(huddle_curx - huddle_speed);
+		}
+		else {
+			uint huddle_curx = huddleInfo[huddle_type].get_Xpos();
+			huddleInfo[huddle_type].set_Xpos(huddle_curx - huddle_speed);
+		}
 
 		// 장애물 타입 교체
-		if (huddleInfo[huddle_type].get_Xpos() < 0) {
+		if ((huddle_type == 3 && huddleInfo[0].get_Xpos() < 0) || (huddleInfo[huddle_type].get_Xpos() < 0)) {
 			huddle_type = randomNum(0, HUDDLE_TYPE);
 			huddle_check = TRUE;
 
-			huddleInfo[huddle_type].set_Xpos(HUDDLE_START_X);
-			if (huddle_type == 2) {
-				switch (randomNum(0, BIRD_TYPE)) {
-				case 0:
-					huddleInfo[huddle_type].set_Ypos(BIRD_START_Y0);
-					break;
-				case 1:
-					huddleInfo[huddle_type].set_Ypos(BIRD_START_Y1);
-					break;
-				case 2:
-					huddleInfo[huddle_type].set_Ypos(BIRD_START_Y2);
-					break;
+			if (huddle_type == 3) {
+				huddleInfo[0].set_Xpos(HUDDLE_START_X);
+				huddleInfo[2].set_Xpos(HUDDLE_START_X);
+				huddleInfo[2].set_Ypos(BIRD_START_Y0);
+			}
+
+			else {
+				huddleInfo[huddle_type].set_Xpos(HUDDLE_START_X);
+				if (huddle_type == 2) {
+					switch (randomNum(0, BIRD_TYPE)) {
+					case 0:
+						huddleInfo[huddle_type].set_Ypos(BIRD_START_Y0);
+						break;
+					case 1:
+						huddleInfo[huddle_type].set_Ypos(BIRD_START_Y1);
+						break;
+					case 2:
+						huddleInfo[huddle_type].set_Ypos(BIRD_START_Y2);
+						break;
+					}
 				}
 			}
 		}
@@ -1384,30 +1459,13 @@ void Playing()
 		if ((int)difftime(middle, start_star) > ((item_speed - 1) * STAR_MAINTAIN))
 			isStar = FALSE;
 		/*--------------------------*/
-		
+
 		/*---------화면 출력--------*/
+		// 현재 플레이 시간, HP 출력
+		timeHP((int)difftime(middle, start));
+
 		// 플레이어 그리기
 		Character(playerInfo[playerNum], isStar);
-
-		// 총알 그리기
-		if (bullet_check) Dot(bulletInfo.get_Xpos());
-
-		// 장애물 그리기
-		switch (huddle_type) {
-		case 0:
-			Rock(huddleInfo[huddle_type].get_Xpos()); break;
-		case 1:
-			Tree(huddleInfo[huddle_type].get_Xpos()); break;
-		case 2:
-			Bird(huddleInfo[huddle_type].get_Xpos(), huddleInfo[huddle_type].get_Ypos()); break;
-		}
-
-		// 몬스터 그리기
-		if (((int)difftime(middle, start) > MONSTER_UPDATE) && (!monsterInfo.get_dead())) {
-			if (monsterInfo.get_Xpos() > 0) {
-				Ghost(monsterInfo.get_Xpos(), monsterInfo.get_Ypos());
-			}
-		}
 
 		// 아이템 그리기
 		if ((int)difftime(middle, start) > ITEM_UPDATE) {
@@ -1421,8 +1479,26 @@ void Playing()
 			}
 		}
 
-		// 현재 점수, HP 출력
-		ScoreHP((int)difftime(middle, start));
+		// 총알 그리기
+		if (bullet_check) Dot(bulletInfo.get_Xpos());
+
+		// 몬스터 그리기
+		if ((int)difftime(middle, start) > MONSTER_UPDATE) {
+			if (!monsterInfo.get_dead() && monsterInfo.get_Xpos() > 0)
+				Ghost(monsterInfo.get_Xpos(), monsterInfo.get_Ypos());
+		}
+
+		// 장애물 그리기
+		switch (huddle_type) {
+		case 0:
+			Rock(huddleInfo[huddle_type].get_Xpos()); break;
+		case 1:
+			Tree(huddleInfo[huddle_type].get_Xpos()); break;
+		case 2:
+			Bird(huddleInfo[huddle_type].get_Xpos(), huddleInfo[huddle_type].get_Ypos()); break;
+		case 3:
+			Rock(huddleInfo[0].get_Xpos()); Bird(huddleInfo[2].get_Xpos(), huddleInfo[2].get_Ypos()); break;
+		}
 
 		// 화면 clear
 		system("cls");
@@ -1432,47 +1508,49 @@ void Playing()
 	// 점수 설정
 	finish = time(NULL);
 	time(&finish);
-	int flowTime = (int)difftime(finish, start);
-	int prev = playerInfo[playerNum].get_score();
+	uint total_score = (int)difftime(finish, start) + num_ghost * GHOST_SCORE;
+	uint prev = playerInfo[playerNum].get_score();
 
-	playerInfo[playerNum].set_score(flowTime > prev ? flowTime : prev);
+	playerInfo[playerNum].set_score(total_score > prev ? total_score : prev);
 
-	return;
+	return total_score;
 }
 
 int main()
 {
-	system("mode con:cols=120 lines=35");		// 화면 가로, 세로
-	get_scores_file();
+	system("mode con:cols=120 lines=35");	// 콘솔 창 가로, 세로
+
+	get_score_file();
 
 	while (1)
 	{
-		playerNum = 0;
 		init_class();
-		int next_GameStart = 4, next_Score = 4;
 
 		switch (MainMenu()) {
 		case 0: {
-			next_GameStart = GameStart();		// player 선택
-
-			if (next_GameStart == 3) break;		// 첫 화면으로 이동
-			else if (next_GameStart < 4) {
-				Count3sec();					// 게임 시작 전 3초 count
-				Playing();
-				GameOver();
-				break;
+			int select = SelectPlayer();
+			
+			if (select == 1) {
+				Count3sec();				// 게임 시작 전 3초 count
+				uint score = Playing();
+				GameOver(score);
+				set_score_file();			// output 파일 업데이트
+				break;						// 첫 화면으로 이동
 			}
+			else if (select == 2) break;	// 첫 화면으로 이동'
 		}
 		case 1: {
-			next_Score = Score();
-
-			if (next_Score == 3) break;			// 첫 화면으로 이동
-			else if (next_Score < 4) break;
+			Manual();
+			break;							// 첫 화면으로 이동
 		}
 		case 2: {
-			system("cls");						// 콘솔 창 clear
-			set_scores_file();					// output 파일 업데이트
-			return 0;							// 종료
+			Score();
+			break;							// 첫 화면으로 이동
+		}
+		case 3: {
+			system("cls");					// 콘솔 창 clear
+			set_score_file();				// output 파일 업데이트
+			return 0;						// 종료
 		}
 		}
 	}
