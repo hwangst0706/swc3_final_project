@@ -1,13 +1,12 @@
-#include <iostream>
-#include <fstream>
+ï»¿#include <iostream>
 #include <stdio.h>
-#include <string>
+#include <fstream>
 #include <windows.h>
 #include <conio.h>
 #include <time.h>
 #include <random>
 
-// ¹æÇâÅ°
+// ë°©í–¥í‚¤
 #define UP					72
 #define DOWN				80
 #define LEFT				75
@@ -41,7 +40,6 @@
 
 // Monster
 #define MONSTER_START_X		95
-#define MONSTER_START_Y		3
 #define MONSTER_BOUND_UP	3
 #define MONSTER_BOUND_DOWN	18
 #define MONSTER_SIZE		12
@@ -61,13 +59,14 @@
 #define MONSTER_UPDATE		30
 #define STAR_MAINTAIN		7
 #define BULLET_SPEED		2
-#define WAIT				350
+#define WAIT				300
 #define GHOST_SCORE			10
+#define JUMP_SIZE			8
 
 using namespace std;
 typedef unsigned int uint;
 
-/*----------ÀÚ·áÇü ¿µ¿ª----------*/
+/*----------ìë£Œí˜• ì˜ì—­----------*/
 enum {
 	BLACK,
 	DARK_BLUE,
@@ -92,85 +91,66 @@ typedef struct _position {
 	int y;
 }P;
 
-class Player {
-private:
-	uint score;
-	uint hp;
-	P pos;
-public:
-	Player() : score(0), hp(MAX_HP) { pos.x = START_POS_X; pos.y = START_POS_Y; }
-	uint get_score() { return score; }
-	uint get_hp() { return hp; }
-	int get_Xpos() { return pos.x; }
-	int get_Ypos() { return pos.y; }
-	void set_score(uint s) { score = s; }
-	void set_hp(uint val) { hp = val; }
-	void set_Xpos(int val) { pos.x = val; }
-	void set_Ypos(int val) { pos.y = val; }
-	friend void Character(Player &myplay, bool status);
-	void reset() {
-		hp = MAX_HP;
-		pos.x = START_POS_X;
-		pos.y = START_POS_Y;
-	}
+class Basis {
+	protected:
+		P pos;
+	public:
+		int get_Xpos() { return pos.x; }
+		int get_Ypos() { return pos.y; }
+		void set_Xpos(int val) { pos.x = val; }
+		void set_Ypos(int val) { pos.y = val; }
+		void reset(int X, int Y) { pos.x = X; pos.y = Y; }
 };
 
-class Bullet {
-private:
-	P pos;
-public:
-	Bullet() { pos.x = BULLET_START_X; pos.y = 0; }
-	int get_Xpos() { return pos.x; }
-	int get_Ypos() { return pos.y; }
-	void set_Xpos(int val) { pos.x = val; }
-	void set_Ypos(int val) { pos.y = val; }
-	void reset() { pos.x = BULLET_START_X; pos.y = 0; }
+class Player : public Basis {
+	private:
+		uint score;
+		uint hp;
+	public:
+		Player() : score(0), hp(MAX_HP) { Basis::reset(START_POS_X, START_POS_Y); }
+		uint get_score() { return score; }
+		uint get_hp() { return hp; }
+		void set_score(uint val) { score = val; }
+		void set_hp(uint val) { hp = val; }
+		friend void Character(Player& myplay, bool status);
+		void reset() {
+			Basis::reset(START_POS_X, START_POS_Y);
+			hp = MAX_HP;
+		}
 };
 
-class Huddle {
-private:
-	P pos;
-public:
-	Huddle() { pos.x = HUDDLE_START_X; pos.y = 0; }
-	int get_Xpos() { return pos.x; }
-	int get_Ypos() { return pos.y; }
-	void set_Xpos(int val) { pos.x = val; }
-	void set_Ypos(int val) { pos.y = val; }
-	void reset() { pos.x = HUDDLE_START_X; pos.y = 0; }
+class Bullet : public Basis {
+	public:
+		Bullet() { Basis::reset(BULLET_START_X, 0); }
+		void reset() { Basis::reset(BULLET_START_X, 0); }
 };
 
-class Monster {
-private:
-	bool isDead;
-	P pos;
-public:
-	Monster() : isDead(FALSE) { pos.x = MONSTER_START_X; pos.y = MONSTER_START_Y; }
-	bool get_dead() { return isDead; }
-	int get_Xpos() { return pos.x; }
-	int get_Ypos() { return pos.y; }
-	void set_dead(bool val) { isDead = val; }
-	void set_Xpos(int val) { pos.x = val; }
-	void set_Ypos(int val) { pos.y = val; }
-	void reset() {
-		isDead = FALSE;
-		pos.x = MONSTER_START_X;
-		pos.y = MONSTER_START_Y;
-	}
+class Huddle : public Basis {
+	public:
+		Huddle() { Basis::reset(HUDDLE_START_X, 0); }
+		void reset() { Basis::reset(HUDDLE_START_X, 0); }
 };
 
-class Item {
-private:
-	P pos;
-public:
-	Item() { pos.x = ITEM_START_X; pos.y = ITEM_BOUND_UP; }
-	int get_Xpos() { return pos.x; }
-	int get_Ypos() { return pos.y; }
-	void set_Xpos(int val) { pos.x = val; }
-	void set_Ypos(int val) { pos.y = val; }
-	void reset() { pos.x = ITEM_START_X; pos.y = ITEM_BOUND_UP; }
+class Monster : public Basis {
+	private:
+		bool isDead;
+	public:
+		Monster() : isDead(FALSE) { Basis::reset(MONSTER_START_X, MONSTER_BOUND_UP); }
+		bool get_dead() { return isDead; }
+		void set_dead(bool val) { isDead = val; }
+		void reset() {
+			Basis::reset(MONSTER_START_X, MONSTER_BOUND_UP);
+			isDead = FALSE;
+		}
 };
 
-/*---------Àü¿ª º¯¼ö ÃÊ±âÈ­---------*/
+class Item : public Basis {
+	public:
+		Item() { Basis::reset(ITEM_START_X, ITEM_BOUND_UP); }
+		void reset() { Basis::reset(ITEM_START_X, ITEM_BOUND_UP); }
+};
+
+/*---------ì „ì—­ ë³€ìˆ˜ ì´ˆê¸°í™”---------*/
 int playerNum;
 Player playerInfo[3];
 Bullet bulletInfo;
@@ -178,7 +158,7 @@ Huddle huddleInfo[3];	// 0 : rock, 1 : tree, 2 : bird
 Monster monsterInfo;
 Item itemInfo[3];		// 0 :heart, 1 :star, 2 : blank / disappear
 
-/*----------ÇÔ¼ö ¿µ¿ª ½ÃÀÛ----------*/
+/*----------í•¨ìˆ˜ ì˜ì—­ ì‹œì‘----------*/
 void init_class()
 {
 	for (int i = 0; i < 3; i++) {
@@ -226,7 +206,7 @@ inline T randomNum(T min, T max)
 	return dist(gen);
 }
 
-void cursor_pos(int x, int y)
+inline void cursor_pos(int x, int y)
 {
 	COORD p;
 	p.X = x;
@@ -253,7 +233,7 @@ int MainMenu()
 	cursor_pos(x, y);
 	printf("=================================");
 	cursor_pos(x + 4, y + 3);
-	printf("¢º  G A M E  S T A R T");
+	printf("â–¶  G A M E  S T A R T");
 	cursor_pos(x + 8, y + 6);
 	printf("H O W  T O  P L A Y");
 	cursor_pos(x + 8, y + 9);
@@ -282,7 +262,7 @@ int MainMenu()
 			cursor_pos(x, y);
 			printf("=================================");
 			cursor_pos(x + 4, y + 3);
-			printf("¢º  G A M E  S T A R T");
+			printf("â–¶  G A M E  S T A R T");
 			cursor_pos(x + 8, y + 6);
 			printf("H O W  T O  P L A Y");
 			cursor_pos(x + 8, y + 9);
@@ -299,7 +279,7 @@ int MainMenu()
 			cursor_pos(x + 8, y + 3);
 			printf("G A M E  S T A R T");
 			cursor_pos(x + 4, y + 6);
-			printf("¢º  H O W  T O  P L A Y");
+			printf("â–¶  H O W  T O  P L A Y");
 			cursor_pos(x + 8, y + 9);
 			printf("S C O R E");
 			cursor_pos(x + 8, y + 12);
@@ -316,7 +296,7 @@ int MainMenu()
 			cursor_pos(x + 8, y + 6);
 			printf("H O W  T O  P L A Y");
 			cursor_pos(x + 4, y + 9);
-			printf("¢º  S C O R E");
+			printf("â–¶  S C O R E");
 			cursor_pos(x + 8, y + 12);
 			printf("E X I T");
 			cursor_pos(x, y + 15);
@@ -333,7 +313,7 @@ int MainMenu()
 			cursor_pos(x + 8, y + 9);
 			printf("S C O R E");
 			cursor_pos(x + 4, y + 12);
-			printf("¢º  E X I T");
+			printf("â–¶  E X I T");
 			cursor_pos(x, y + 15);
 			printf("=================================");
 		}
@@ -345,7 +325,7 @@ int MainMenu()
 				cursor_pos(x, y);
 				printf("=================================");
 				cursor_pos(x + 4, y + 3);
-				printf("¢¹  G A M E  S T A R T");
+				printf("â–·  G A M E  S T A R T");
 				cursor_pos(x + 8, y + 6);
 				printf("H O W  T O  P L A Y");
 				cursor_pos(x + 8, y + 9);
@@ -362,7 +342,7 @@ int MainMenu()
 				cursor_pos(x + 8, y + 3);
 				printf("G A M E  S T A R T");
 				cursor_pos(x + 4, y + 6);
-				printf("¢¹  H O W  T O  P L A Y");
+				printf("â–·  H O W  T O  P L A Y");
 				cursor_pos(x + 8, y + 9);
 				printf("S C O R E");
 				cursor_pos(x + 8, y + 12);
@@ -379,7 +359,7 @@ int MainMenu()
 				cursor_pos(x + 8, y + 6);
 				printf("H O W  T O  P L A Y");
 				cursor_pos(x + 4, y + 9);
-				printf("¢¹  S C O R E");
+				printf("â–·  S C O R E");
 				cursor_pos(x + 8, y + 12);
 				printf("E X I T");
 				cursor_pos(x, y + 15);
@@ -396,7 +376,7 @@ int MainMenu()
 				cursor_pos(x + 8, y + 9);
 				printf("S C O R E");
 				cursor_pos(x + 4, y + 12);
-				printf("¢¹  E X I T");
+				printf("â–·  E X I T");
 				cursor_pos(x, y + 15);
 				printf("=================================");
 			}
@@ -418,7 +398,7 @@ int SelectPlayer()
 	cursor_pos(x, y);
 	printf("=================================");
 	cursor_pos(x + 4, y + 3);
-	printf("¢º  P L A Y E R  1");
+	printf("â–¶  P L A Y E R  1");
 	cursor_pos(x + 8, y + 6);
 	printf("P L A Y E R  2");
 	cursor_pos(x + 8, y + 9);
@@ -445,7 +425,7 @@ int SelectPlayer()
 			cursor_pos(x, y);
 			printf("=================================");
 			cursor_pos(x + 4, y + 3);
-			printf("¢º  P L A Y E R  1");
+			printf("â–¶  P L A Y E R  1");
 			cursor_pos(x + 8, y + 6);
 			printf("P L A Y E R  2");
 			cursor_pos(x + 8, y + 9);
@@ -460,7 +440,7 @@ int SelectPlayer()
 			cursor_pos(x + 8, y + 3);
 			printf("P L A Y E R  1");
 			cursor_pos(x + 4, y + 6);
-			printf("¢º  P L A Y E R  2");
+			printf("â–¶  P L A Y E R  2");
 			cursor_pos(x + 8, y + 9);
 			printf("P L A Y E R  3");
 			cursor_pos(x, y + 12);
@@ -475,7 +455,7 @@ int SelectPlayer()
 			cursor_pos(x + 8, y + 6);
 			printf("P L A Y E R  2");
 			cursor_pos(x + 4, y + 9);
-			printf("¢º  P L A Y E R  3");
+			printf("â–¶  P L A Y E R  3");
 			cursor_pos(x, y + 12);
 			printf("=================================");
 		}
@@ -487,7 +467,7 @@ int SelectPlayer()
 				cursor_pos(x, y);
 				printf("=================================");
 				cursor_pos(x + 4, y + 3);
-				printf("¢¹  P L A Y E R  1");
+				printf("â–·  P L A Y E R  1");
 				cursor_pos(x + 8, y + 6);
 				printf("P L A Y E R  2");
 				cursor_pos(x + 8, y + 9);
@@ -502,7 +482,7 @@ int SelectPlayer()
 				cursor_pos(x + 8, y + 3);
 				printf("P L A Y E R  1");
 				cursor_pos(x + 4, y + 6);
-				printf("¢¹  P L A Y E R  2");
+				printf("â–·  P L A Y E R  2");
 				cursor_pos(x + 8, y + 9);
 				printf("P L A Y E R  3");
 				cursor_pos(x, y + 12);
@@ -517,7 +497,7 @@ int SelectPlayer()
 				cursor_pos(x + 8, y + 6);
 				printf("P L A Y E R  2");
 				cursor_pos(x + 4, y + 9);
-				printf("¢¹  P L A Y E R  3");
+				printf("â–·  P L A Y E R  3");
 				cursor_pos(x, y + 12);
 				printf("=================================");
 			}
@@ -537,81 +517,81 @@ void Count3sec()
 
 	system("cls");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– ");
 	printf("\n\n\n\n\n\n\n\n\n\n\n\n");
 	Sleep(1000);
 
 	y = 11;
 	system("cls");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("          ¡á");
+	printf("          â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x, y++);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x, y++);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x, y++);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– ");
 	printf("\n\n\n\n\n\n\n\n\n\n\n\n");
 	Sleep(1000);
 
 	x = 55, y = 11;
 	system("cls");
 	cursor_pos(x, y++);
-	printf("  ¡á¡á");
+	printf("  â– â– ");
 	cursor_pos(x, y++);
-	printf("    ¡á");
+	printf("    â– ");
 	cursor_pos(x, y++);
-	printf("    ¡á");
+	printf("    â– ");
 	cursor_pos(x, y++);
-	printf("    ¡á");
+	printf("    â– ");
 	cursor_pos(x, y++);
-	printf("    ¡á");
+	printf("    â– ");
 	cursor_pos(x, y++);
-	printf("    ¡á");
+	printf("    â– ");
 	cursor_pos(x, y++);
-	printf("    ¡á");
+	printf("    â– ");
 	cursor_pos(x, y++);
-	printf("    ¡á");
+	printf("    â– ");
 	cursor_pos(x, y++);
-	printf("    ¡á");
+	printf("    â– ");
 	cursor_pos(x, y++);
-	printf("    ¡á");
+	printf("    â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– ");
 	printf("\n\n\n\n\n\n\n\n\n\n\n\n");
 	Sleep(1000);
 }
@@ -625,7 +605,7 @@ void Manual()
 	printf("=============== H O W  T O  P L A Y ===============");
 	y++;
 	cursor_pos(x + 12, y++);
-	printf("¡è : JUMP    ¡æ : ATTACK"); // ¡ç ¡é
+	printf("â†‘ : JUMP    â†’ : ATTACK");
 	y++; y++;
 	cursor_pos(x, y++);
 	printf("Avoid various obstacles that are approaching!");
@@ -647,10 +627,10 @@ void Manual()
 	printf("There are items that help you.");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), RED);
 	cursor_pos(x, y++);
-	printf("Heart¢¾ increases your HP. (Maximum HP is 3)");
+	printf("Heartâ™¥ increases your HP. (Maximum HP is 3)");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	cursor_pos(x, y++);
-	printf("Star¡Ú make you invincible.");
+	printf("Starâ˜… make you invincible.");
 	y++;
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
 	cursor_pos(x, y++);
@@ -659,16 +639,11 @@ void Manual()
 	printf("GOOD LUCK!");
 	cursor_pos(x, y + 2);
 	printf("===================================================");
-
-	bool isSelect = FALSE;
+	printf("\n\n\n\n\n");
 
 	while (1) {
-		int key = input_key_dir();
-
-		if (key == LEFT) isSelect = TRUE;
-		else if (key == 0) continue;
-
-		if (isSelect) break;
+		if (input_key_dir() == LEFT)
+			break;
 	}
 }
 
@@ -718,129 +693,123 @@ void Score()
 	printf("=================================");
 	printf("\n\n\n\n\n\n\n\n\n\n\n");
 
-	bool isSelect = FALSE;
-
 	while (1) {
-		int key = input_key_dir();
-
-		if (key == LEFT) isSelect = TRUE;
-		else if (key == 0) continue;
-
-		if (isSelect) break;
+		if (input_key_dir() == LEFT)
+			break;
 	}
 }
 
-void Character(Player &myplay, bool status)
+void Character(Player& myplay, bool status)
 {
 	int x = myplay.pos.x, y = myplay.pos.y;
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	cursor_pos(x + 6, y++);
-	printf("¡á¡á¡á");
+	printf("â– â– â– ");
 	cursor_pos(x + 4, y++);
-	printf("¡á");
+	printf("â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á¡á");
+	printf("â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x + 2, y++);
-	printf("¡á");
+	printf("â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x + 2, y++);
-	printf("¡á");
+	printf("â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á¡á");
+	printf("â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á");
+	printf("â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SKYBLUE);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_SKYBLUE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x + 2, y++);
-	printf("¡á");
+	printf("â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á");
+	printf("â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x + 2, y++);
-	printf("¡á");
+	printf("â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á");
+	printf("â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á  ¡á");
+	printf("â–   â– ");
 	if (status)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	else
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á");
+	printf("â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x + 3, y++);
-	printf("¡á¡á    ¡á¡á");
+	printf("â– â–     â– â– ");
 }
 
 void Dot(int posX) {
@@ -848,7 +817,7 @@ void Dot(int posX) {
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_RED);
 	cursor_pos(x, y);
-	printf("¡á¢º");
+	printf("â– â–¶");
 }
 
 void Rock(int posX)
@@ -857,13 +826,13 @@ void Rock(int posX)
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY);
 	cursor_pos(x + 2, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 }
 
 void Tree(int posX)
@@ -872,22 +841,22 @@ void Tree(int posX)
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GREEN);
 	cursor_pos(x + 3, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x + 2, y++);
-	printf("¡á¡á¡á");
+	printf("â– â– â– ");
 	cursor_pos(x + 1, y++);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_YELLOW);
 	cursor_pos(x + 3, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x + 3, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x + 3, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 }
 
 void Bird(int posX, int posY)
@@ -896,29 +865,29 @@ void Bird(int posX, int posY)
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
 	cursor_pos(x + 2, y++);
-	printf("¡á");
+	printf("â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), BLACK);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x, y++);
-	printf("¡á");
+	printf("â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), BLACK);
-	printf("¡á");
+	printf("â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
-	printf("¡á");
+	printf("â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), BLACK);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
-	printf("¡á");
+	printf("â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), BLACK);
-	printf("¡á");
+	printf("â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GRAY);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x + 6, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x + 6, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 }
 
 void Ghost(int posX, int posY)
@@ -927,74 +896,74 @@ void Ghost(int posX, int posY)
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
 	cursor_pos(x + 8, y++);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	cursor_pos(x + 4, y++);
-	printf("¡á¡á¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– â– â– ");
 	cursor_pos(x + 2, y++);
-	printf("¡á¡á¡á¡á¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á");
+	printf("â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á¡á");
+	printf("â– â– â– ");
 	cursor_pos(x, y++);
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á");
-	cursor_pos(x, y++);
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á");
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á");
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á");
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á");
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á");
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x, y++);
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á¡á¡á");
+	printf("â– â– ");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_BLUE);
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
-	printf("¡á¡á");
+	printf("â– â– ");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
-	printf("¡á¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á¡á¡á¡á¡á¡á¡á¡á");
+	printf("â– ");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+	printf("â– â– ");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
+	printf("â– â– â– â– ");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+	printf("â– â– ");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), VIOLET);
+	printf("â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á¡á¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– â– â– â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á  ¡á¡á¡á¡á  ¡á¡á¡á");
+	printf("â– â– â– â– â– â– â– â– â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á      ¡á¡á      ¡á¡á");
+	printf("â– â– â–   â– â– â– â–   â– â– â– ");
+	cursor_pos(x, y++);
+	printf("â– â–       â– â–       â– â– ");
 }
 
 void Heart(int posX, int posY)
@@ -1003,15 +972,15 @@ void Heart(int posX, int posY)
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), RED);
 	cursor_pos(x + 2, y++);
-	printf("¡á¡á  ¡á¡á");
+	printf("â– â–   â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– â– â– ");
 	cursor_pos(x + 2, y++);
-	printf("¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– ");
 	cursor_pos(x + 4, y++);
-	printf("¡á¡á¡á");
+	printf("â– â– â– ");
 	cursor_pos(x + 6, y++);
-	printf("¡á");
+	printf("â– ");
 }
 
 void Star(int posX, int posY)
@@ -1020,15 +989,15 @@ void Star(int posX, int posY)
 
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), YELLOW);
 	cursor_pos(x + 4, y++);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x + 4, y++);
-	printf("¡á");
+	printf("â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á¡á");
+	printf("â– â– â– â– â– ");
 	cursor_pos(x + 3, y++);
-	printf("¡á¡á");
+	printf("â– â– ");
 	cursor_pos(x + 1, y++);
-	printf("¡á    ¡á");
+	printf("â–     â– ");
 }
 
 void GameOver(uint score)
@@ -1040,29 +1009,29 @@ void GameOver(uint score)
 
 	// GAME
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á      ¡á¡á      ¡á      ¡á    ¡á¡á¡á¡á");
+	printf("â– â– â– â–       â– â–       â–       â–     â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á          ¡á    ¡á    ¡á¡á  ¡á¡á    ¡á");
+	printf("â–           â–     â–     â– â–   â– â–     â– ");
 	cursor_pos(x, y++);
-	printf("¡á  ¡á¡á    ¡á¡á¡á¡á    ¡á  ¡á  ¡á    ¡á¡á¡á¡á");
+	printf("â–   â– â–     â– â– â– â–     â–   â–   â–     â– â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á    ¡á    ¡á    ¡á    ¡á      ¡á    ¡á");
+	printf("â–     â–     â–     â–     â–       â–     â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á    ¡á    ¡á    ¡á      ¡á    ¡á¡á¡á¡á");
+	printf("â– â– â– â–     â–     â–     â–       â–     â– â– â– â– ");
 
 	// OVER
 	y += 2;
 
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á    ¡á      ¡á    ¡á¡á¡á¡á    ¡á¡á¡á");
+	printf("â– â– â– â–     â–       â–     â– â– â– â–     â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á    ¡á     ¡á    ¡á     ¡á          ¡á    ¡á");
+	printf("â–     â–      â–     â–      â–           â–     â– ");
 	cursor_pos(x, y++);
-	printf("¡á    ¡á      ¡á  ¡á      ¡á¡á¡á¡á    ¡á¡á¡á");
+	printf("â–     â–       â–   â–       â– â– â– â–     â– â– â– ");
 	cursor_pos(x, y++);
-	printf("¡á    ¡á       ¡á¡á       ¡á          ¡á   ¡á");
+	printf("â–     â–        â– â–        â–           â–    â– ");
 	cursor_pos(x, y++);
-	printf("¡á¡á¡á¡á        ¡á        ¡á¡á¡á¡á    ¡á    ¡á");
+	printf("â– â– â– â–         â–         â– â– â– â–     â–     â– ");
 
 	cursor_pos(x + 15, y + 3);
 	printf("S C O R E  %u", score);
@@ -1080,7 +1049,7 @@ void timeHP(uint flowtime)
 
 	cursor_pos(102, 1);
 	printf("HEART  ");
-	for (uint i = 0; i < playerInfo[playerNum].get_hp(); i++) printf("¢¾ ");
+	for (uint i = 0; i < playerInfo[playerNum].get_hp(); i++) printf("â™¥ ");
 }
 
 bool check_attack()
@@ -1189,7 +1158,7 @@ bool check_fail(uint huddle, bool status)
 	return FALSE;
 }
 
-bool check_success(uint player, uint item)
+bool check_success(uint item)
 {
 	int px = playerInfo[playerNum].get_Xpos(), py = playerInfo[playerNum].get_Ypos();
 	int ix = itemInfo[item].get_Xpos(), iy = itemInfo[item].get_Ypos();
@@ -1223,7 +1192,7 @@ bool check_success(uint player, uint item)
 
 uint Playing()
 {
-	// ½Ã°£ °ü·Ã º¯¼ö
+	// ì‹œê°„ ê´€ë ¨ ë³€ìˆ˜
 	time_t start = time(NULL);
 	time_t middle = time(NULL);
 	time_t finish = time(NULL);
@@ -1233,53 +1202,53 @@ uint Playing()
 	time(&finish);
 	time(&start_star);
 
-	// Á¡¼ö °ü·Ã º¯¼ö
+	// ì ìˆ˜ ê´€ë ¨ ë³€ìˆ˜
 	int num_ghost = 0;
 
-	// Á¡ÇÁ °ü·Ã º¯¼ö
+	// ì í”„ ê´€ë ¨ ë³€ìˆ˜
 	bool isDown = FALSE;
-	int jump_size = 8, jump_cnt = 0, jump_type = 0;
+	int jump_cnt = 0, jump_type = 0;
 
-	// ÃÑ¾Ë °ü·Ã º¯¼ö
+	// ì´ì•Œ ê´€ë ¨ ë³€ìˆ˜
 	bool bullet_check = FALSE;
 
-	// Àå¾Ö¹° °ü·Ã º¯¼ö
+	// ì¥ì• ë¬¼ ê´€ë ¨ ë³€ìˆ˜
 	bool huddle_check = TRUE;
 	int huddle_speed = 2, huddle_type = 0;
 
-	// ¸ó½ºÅÍ °ü·Ã º¯¼ö
+	// ëª¬ìŠ¤í„° ê´€ë ¨ ë³€ìˆ˜
 	int monster_speed = 2, monster_once = 0, monster_direction = 1;
 
-	// ¾ÆÀÌÅÛ °ü·Ã º¯¼ö
+	// ì•„ì´í…œ ê´€ë ¨ ë³€ìˆ˜
 	bool isStar = FALSE, item_check = TRUE;
 	int item_speed = 2, item_type = 0, item_once = 0;
 
-	// ¾²·¹±â input Á¦°Å
+	// ì“°ë ˆê¸° input ì œê±°
 	while (input_key_dir());
 
 	while (1) {
 		int key_dir = input_key_dir();
 
-		/*---------ÇÃ·¹ÀÌ¾î---------*/
-		// ÇÃ·¹ÀÌ¾î 2´Ü Á¡ÇÁ
+		/*---------í”Œë ˆì´ì–´---------*/
+		// í”Œë ˆì´ì–´ 2ë‹¨ ì í”„
 		if (key_dir == UP) {
 			if (jump_type == 0)
 				jump_type = 1;
 			else if (jump_type == 1) {
-				isDown = FALSE;
 				jump_type = 2;
 				jump_cnt = 0;
+				isDown = FALSE;
 			}
 		}
 
-		// ÇÃ·¹ÀÌ¾î À§Ä¡ ¼±Á¤
+		// í”Œë ˆì´ì–´ ìœ„ì¹˜ ì„ ì •
 		if (jump_type) {
-			jump_cnt++;
-
 			if (isDown) playerInfo[playerNum].set_Ypos(playerInfo[playerNum].get_Ypos() + 1);
 			else		playerInfo[playerNum].set_Ypos(playerInfo[playerNum].get_Ypos() - 1);
+			
+			jump_cnt++;
 
-			if (jump_cnt == jump_size) {
+			if (jump_cnt == JUMP_SIZE) {
 				if (!isDown) {
 					isDown = TRUE;
 					jump_cnt = 0;
@@ -1294,8 +1263,8 @@ uint Playing()
 		}
 		/*--------------------------*/
 
-		/*-----------ÃÑ¾Ë-----------*/
-		// ÃÑ¾Ë ¹ß»ç ½Ã ÃÊ±â À§Ä¡ ¼±Á¤
+		/*-----------ì´ì•Œ-----------*/
+		// ì´ì•Œ ë°œì‚¬ ì‹œ ì´ˆê¸° ìœ„ì¹˜ ì„ ì •
 		if (key_dir == RIGHT && !bullet_check) {
 			bullet_check = TRUE;
 
@@ -1303,13 +1272,13 @@ uint Playing()
 			bulletInfo.set_Ypos(playerInfo[playerNum].get_Ypos() + 4);
 		}
 
-		// ÃÑ¾Ë ÀÌµ¿ Áß À§Ä¡ ¼±Á¤
+		// ì´ì•Œ ì´ë™ ì¤‘ ìœ„ì¹˜ ì„ ì •
 		if (bullet_check) {
 			uint bullet_curx = bulletInfo.get_Xpos();
 
 			bulletInfo.set_Xpos(bullet_curx + BULLET_SPEED);
 
-			// ÃÑ¾Ë °ø°İÀÌ ¼º°øÇß´ÂÁö ÆÇÁ¤
+			// ì´ì•Œ ê³µê²©ì´ ì„±ê³µí–ˆëŠ”ì§€ íŒì •
 			if (((int)difftime(middle, start) > MONSTER_UPDATE) && !monsterInfo.get_dead()) {
 				if (check_attack()) {
 					bullet_check = FALSE;
@@ -1321,13 +1290,13 @@ uint Playing()
 		if (bulletInfo.get_Xpos() > 116) bullet_check = FALSE;
 		/*--------------------------*/
 
-		/*----------Àå¾Ö¹°----------*/
-		// Àå¾Ö¹° ¼Óµµ Áõ°¡
+		/*----------ì¥ì• ë¬¼----------*/
+		// ì¥ì• ë¬¼ ì†ë„ ì¦ê°€
 		middle = time(NULL);
 		time(&middle);
 		if ((int)difftime(middle, start) > (huddle_speed * SPEED_UPDATE)) huddle_speed++;
 
-		// Àå¾Ö¹° À§Ä¡ ¼±Á¤
+		// ì¥ì• ë¬¼ ìœ„ì¹˜ ì„ ì •
 		if (huddle_type == 3) {
 			uint huddle_curx = huddleInfo[0].get_Xpos();
 			huddleInfo[0].set_Xpos(huddle_curx - huddle_speed);
@@ -1338,7 +1307,7 @@ uint Playing()
 			huddleInfo[huddle_type].set_Xpos(huddle_curx - huddle_speed);
 		}
 
-		// Àå¾Ö¹° Å¸ÀÔ ±³Ã¼
+		// ì¥ì• ë¬¼ íƒ€ì… êµì²´
 		if ((huddle_type == 3 && huddleInfo[0].get_Xpos() < 0) || (huddleInfo[huddle_type].get_Xpos() < 0)) {
 			huddle_type = randomNum(0, HUDDLE_TYPE);
 			huddle_check = TRUE;
@@ -1367,7 +1336,7 @@ uint Playing()
 			}
 		}
 
-		// °ÔÀÓ ¿À¹ö ÆÇÁ¤ (Àå¾Ö¹°)
+		// ê²Œì„ ì˜¤ë²„ íŒì • (ì¥ì• ë¬¼)
 		if (huddle_check && check_fail(huddle_type, isStar)) {
 			huddle_check = FALSE;
 
@@ -1377,8 +1346,8 @@ uint Playing()
 		}
 		/*--------------------------*/
 
-		/*----------¸ó½ºÅÍ----------*/
-		// ¸ó½ºÅÍ À§Ä¡ ¼±Á¤
+		/*----------ëª¬ìŠ¤í„°----------*/
+		// ëª¬ìŠ¤í„° ìœ„ì¹˜ ì„ ì •
 		if ((int)difftime(middle, start) > MONSTER_UPDATE) {
 			int monster_curx = monsterInfo.get_Xpos();
 			int monster_cury = monsterInfo.get_Ypos();
@@ -1397,19 +1366,19 @@ uint Playing()
 			if ((int)difftime(middle, start) % (MONSTER_UPDATE + 1) == 0) monster_once = 0;
 		}
 
-		// °ÔÀÓ ¿À¹ö ÆÇÁ¤ (¸ó½ºÅÍ)
+		// ê²Œì„ ì˜¤ë²„ íŒì • (ëª¬ìŠ¤í„°)
 		if (((int)difftime(middle, start) > MONSTER_UPDATE) && (!monsterInfo.get_dead())) {
 			if (check_hunt(isStar)) break;
 		}
 		/*--------------------------*/
 
-		/*----------¾ÆÀÌÅÛ----------*/
-		// ¾ÆÀÌÅÛ À§Ä¡ ¼±Á¤
+		/*----------ì•„ì´í…œ----------*/
+		// ì•„ì´í…œ ìœ„ì¹˜ ì„ ì •
 		if ((int)difftime(middle, start) > ITEM_UPDATE) {
 			int item_curx = itemInfo[item_type].get_Xpos();
 			itemInfo[item_type].set_Xpos(item_curx - item_speed);
 
-			// ¾ÆÀÌÅÛ Å¸ÀÔ ±³Ã¼
+			// ì•„ì´í…œ íƒ€ì… êµì²´
 			if ((int)difftime(middle, start) % ITEM_UPDATE == 0) item_once++;
 			if ((itemInfo[item_type].get_Xpos() < 0) && (item_once == 1)) {
 				item_check = TRUE;
@@ -1426,8 +1395,8 @@ uint Playing()
 			if ((int)difftime(middle, start) % (ITEM_UPDATE + 1) == 0) item_once = 0;
 		}
 
-		// ¾ÆÀÌÅÛ ¾ò¾ú´ÂÁö ÆÇÁ¤
-		if (check_success(playerNum, item_type) && item_check) {
+		// ì•„ì´í…œ ì–»ì—ˆëŠ”ì§€ íŒì •
+		if (check_success(item_type) && item_check) {
 			item_check = FALSE;
 
 			if ((item_type == 0) && (playerInfo[playerNum].get_hp() < MAX_HP))
@@ -1436,19 +1405,19 @@ uint Playing()
 			item_type = 2;
 		}
 
-		// ¹«Àû »óÅÂ 10ÃÊ À¯Áö
+		// ë¬´ì  ìƒíƒœ 10ì´ˆ ìœ ì§€
 		if ((int)difftime(middle, start_star) > ((item_speed - 1) * STAR_MAINTAIN))
 			isStar = FALSE;
 		/*--------------------------*/
 
-		/*---------È­¸é Ãâ·Â--------*/
-		// ÇöÀç ÇÃ·¹ÀÌ ½Ã°£, HP Ãâ·Â
+		/*---------í™”ë©´ ì¶œë ¥--------*/
+		// í˜„ì¬ í”Œë ˆì´ ì‹œê°„, HP ì¶œë ¥
 		timeHP((int)difftime(middle, start));
 
-		// ÇÃ·¹ÀÌ¾î ±×¸®±â
+		// í”Œë ˆì´ì–´ ê·¸ë¦¬ê¸°
 		Character(playerInfo[playerNum], isStar);
 
-		// ¾ÆÀÌÅÛ ±×¸®±â
+		// ì•„ì´í…œ ê·¸ë¦¬ê¸°
 		if ((int)difftime(middle, start) > ITEM_UPDATE) {
 			if (itemInfo[item_type].get_Xpos() > 0) {
 				switch (item_type) {
@@ -1460,16 +1429,16 @@ uint Playing()
 			}
 		}
 
-		// ÃÑ¾Ë ±×¸®±â
+		// ì´ì•Œ ê·¸ë¦¬ê¸°
 		if (bullet_check) Dot(bulletInfo.get_Xpos());
 
-		// ¸ó½ºÅÍ ±×¸®±â
+		// ëª¬ìŠ¤í„° ê·¸ë¦¬ê¸°
 		if ((int)difftime(middle, start) > MONSTER_UPDATE) {
 			if (!monsterInfo.get_dead() && monsterInfo.get_Xpos() > 0)
 				Ghost(monsterInfo.get_Xpos(), monsterInfo.get_Ypos());
 		}
 
-		// Àå¾Ö¹° ±×¸®±â
+		// ì¥ì• ë¬¼ ê·¸ë¦¬ê¸°
 		switch (huddle_type) {
 		case 0:
 			Rock(huddleInfo[huddle_type].get_Xpos()); break;
@@ -1481,12 +1450,12 @@ uint Playing()
 			Rock(huddleInfo[0].get_Xpos()); Bird(huddleInfo[2].get_Xpos(), huddleInfo[2].get_Ypos()); break;
 		}
 
-		// È­¸é clear
+		// í™”ë©´ clear
 		system("cls");
 		/*--------------------------*/
 	}
 
-	// Á¡¼ö ¼³Á¤
+	// ì ìˆ˜ ì„¤ì •
 	finish = time(NULL);
 	time(&finish);
 	uint total_score = (int)difftime(finish, start) + num_ghost * GHOST_SCORE;
@@ -1499,7 +1468,7 @@ uint Playing()
 
 int main()
 {
-	system("mode con:cols=120 lines=35");	// ÄÜ¼Ö Ã¢ °¡·Î, ¼¼·Î
+	system("mode con:cols=120 lines=35");	// ì½˜ì†” ì°½ ê°€ë¡œ, ì„¸ë¡œ
 
 	get_score_file();
 
@@ -1510,28 +1479,28 @@ int main()
 		switch (MainMenu()) {
 		case 0: {
 			int select = SelectPlayer();
-			
+
 			if (select == 1) {
-				Count3sec();				// °ÔÀÓ ½ÃÀÛ Àü 3ÃÊ count
+				Count3sec();				// ê²Œì„ ì‹œì‘ ì „ 3ì´ˆ count
 				uint score = Playing();
 				GameOver(score);
-				set_score_file();			// output ÆÄÀÏ ¾÷µ¥ÀÌÆ®
-				break;						// Ã¹ È­¸éÀ¸·Î ÀÌµ¿
+				set_score_file();			// output íŒŒì¼ ì—…ë°ì´íŠ¸
+				break;						// ì²« í™”ë©´ìœ¼ë¡œ ì´ë™
 			}
-			else if (select == 2) break;	// Ã¹ È­¸éÀ¸·Î ÀÌµ¿
+			else if (select == 2) break;	// ì²« í™”ë©´ìœ¼ë¡œ ì´ë™
 		}
 		case 1: {
 			Manual();
-			break;							// Ã¹ È­¸éÀ¸·Î ÀÌµ¿
+			break;							// ì²« í™”ë©´ìœ¼ë¡œ ì´ë™
 		}
 		case 2: {
 			Score();
-			break;							// Ã¹ È­¸éÀ¸·Î ÀÌµ¿
+			break;							// ì²« í™”ë©´ìœ¼ë¡œ ì´ë™
 		}
 		case 3: {
-			system("cls");					// ÄÜ¼Ö Ã¢ clear
-			set_score_file();				// output ÆÄÀÏ ¾÷µ¥ÀÌÆ®
-			return 0;						// Á¾·á
+			system("cls");					// ì½˜ì†” ì°½ clear
+			set_score_file();				// output íŒŒì¼ ì—…ë°ì´íŠ¸
+			return 0;						// ì¢…ë£Œ
 		}
 		}
 	}
