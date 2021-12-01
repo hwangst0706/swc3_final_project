@@ -58,7 +58,7 @@
 #define ITEM_UPDATE			15
 #define MONSTER_UPDATE		30
 #define STAR_MAINTAIN		7
-#define BULLET_SPEED		2
+#define SPEED				2
 #define WAIT				300
 #define GHOST_SCORE			10
 #define JUMP_SIZE			8
@@ -1045,11 +1045,11 @@ void timeHP(uint flowtime)
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
 	cursor_pos(2, 1);
 	printf("TIME  %u min %u sec", flowtime / 60, flowtime % 60);
-	// printf("TIME  %u sec", flowtime);
 
 	cursor_pos(102, 1);
 	printf("HEART  ");
-	for (uint i = 0; i < playerInfo[playerNum].get_hp(); i++) printf("♥ ");
+	for (uint i = 0; i < playerInfo[playerNum].get_hp(); i++)
+		printf("♥ ");
 }
 
 bool check_attack()
@@ -1197,10 +1197,6 @@ uint Playing()
 	time_t middle = time(NULL);
 	time_t finish = time(NULL);
 	time_t start_star = time(NULL);
-	time(&start);
-	time(&middle);
-	time(&finish);
-	time(&start_star);
 
 	// 점수 관련 변수
 	int num_ghost = 0;
@@ -1214,14 +1210,14 @@ uint Playing()
 
 	// 장애물 관련 변수
 	bool huddle_check = TRUE;
-	int huddle_speed = 2, huddle_type = 0;
+	int  huddle_speed = 2, huddle_type = 0;
 
 	// 몬스터 관련 변수
-	int monster_speed = 2, monster_once = 0, monster_direction = 1;
+	int monster_once = 0, monster_direction = 1;
 
 	// 아이템 관련 변수
 	bool isStar = FALSE, item_check = TRUE;
-	int item_speed = 2, item_type = 0, item_once = 0;
+	int item_type = 0, item_once = 0;
 
 	// 쓰레기 input 제거
 	while (input_key_dir());
@@ -1276,7 +1272,7 @@ uint Playing()
 		if (bullet_check) {
 			uint bullet_curx = bulletInfo.get_Xpos();
 
-			bulletInfo.set_Xpos(bullet_curx + BULLET_SPEED);
+			bulletInfo.set_Xpos(bullet_curx + SPEED);
 
 			// 총알 공격이 성공했는지 판정
 			if (((int)difftime(middle, start) > MONSTER_UPDATE) && !monsterInfo.get_dead()) {
@@ -1293,7 +1289,6 @@ uint Playing()
 		/*----------장애물----------*/
 		// 장애물 속도 증가
 		middle = time(NULL);
-		time(&middle);
 		if ((int)difftime(middle, start) > (huddle_speed * SPEED_UPDATE)) huddle_speed++;
 
 		// 장애물 위치 선정
@@ -1352,7 +1347,7 @@ uint Playing()
 			int monster_curx = monsterInfo.get_Xpos();
 			int monster_cury = monsterInfo.get_Ypos();
 
-			monsterInfo.set_Xpos(monster_curx - monster_speed);
+			monsterInfo.set_Xpos(monster_curx - SPEED);
 			if (monster_cury <= MONSTER_BOUND_UP) monster_direction = 1;
 			else if (monster_cury >= MONSTER_BOUND_DOWN) monster_direction = -1;
 			monsterInfo.set_Ypos(monster_cury + monster_direction);
@@ -1376,7 +1371,7 @@ uint Playing()
 		// 아이템 위치 선정
 		if ((int)difftime(middle, start) > ITEM_UPDATE) {
 			int item_curx = itemInfo[item_type].get_Xpos();
-			itemInfo[item_type].set_Xpos(item_curx - item_speed);
+			itemInfo[item_type].set_Xpos(item_curx - SPEED);
 
 			// 아이템 타입 교체
 			if ((int)difftime(middle, start) % ITEM_UPDATE == 0) item_once++;
@@ -1387,10 +1382,8 @@ uint Playing()
 				itemInfo[item_type].set_Xpos(ITEM_START_X);
 				itemInfo[item_type].set_Ypos(randomNum(ITEM_BOUND_UP, ITEM_BOUND_DOWN));
 
-				if (item_type == 1) {
+				if (item_type == 1)
 					start_star = time(NULL);
-					time(&start_star);
-				}
 			}
 			if ((int)difftime(middle, start) % (ITEM_UPDATE + 1) == 0) item_once = 0;
 		}
@@ -1406,7 +1399,7 @@ uint Playing()
 		}
 
 		// 무적 상태 10초 유지
-		if ((int)difftime(middle, start_star) > ((item_speed - 1) * STAR_MAINTAIN))
+		if ((int)difftime(middle, start_star) > ((SPEED - 1) * STAR_MAINTAIN))
 			isStar = FALSE;
 		/*--------------------------*/
 
@@ -1457,7 +1450,6 @@ uint Playing()
 
 	// 점수 설정
 	finish = time(NULL);
-	time(&finish);
 	uint total_score = (int)difftime(finish, start) + num_ghost * GHOST_SCORE;
 	uint prev = playerInfo[playerNum].get_score();
 
@@ -1470,11 +1462,11 @@ int main()
 {
 	system("mode con:cols=120 lines=35");	// 콘솔 창 가로, 세로
 
-	get_score_file();
+	get_score_file();						// output 파일 가져오기
 
 	while (1)
 	{
-		init_class();
+		init_class();						// 초기화
 
 		switch (MainMenu()) {
 		case 0: {
@@ -1482,7 +1474,7 @@ int main()
 
 			if (select == 1) {
 				Count3sec();				// 게임 시작 전 3초 count
-				uint score = Playing();
+				uint score = Playing();		// 게임 ing
 				GameOver(score);
 				set_score_file();			// output 파일 업데이트
 				break;						// 첫 화면으로 이동
